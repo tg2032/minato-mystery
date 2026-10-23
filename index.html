@@ -176,6 +176,10 @@ button{font-family:inherit;}
 }
 #ending-buttons button:hover{background:var(--border);}
 
+#target-panel{counter-reset:opt;}
+#target-panel button{counter-increment:opt;}
+#target-panel button::before{content:counter(opt) ". ";color:var(--fg-dim);font-size:11px;}
+@media (hover:none){#target-panel button::before{content:none;}}
 button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 
 @media (max-width:480px){
@@ -210,7 +214,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
     <div id="howto" class="hidden">
       <b>■ 操作方法</b><br>
       画面下のコマンド（調べる／話す／移動する／持ち物／手帳／指名する）を選ぶと、対象の一覧が表示されます。ボタンをタップ／クリックして選択してください。<br>
-      いちばん下の入力欄に「しらべる」「はなす」のように打ち込んでも反応します。<br><br>
+      いちばん下の入力欄に「しらべる」「はなす」のように打ち込んでも反応します。PCでは、対象の一覧に表示される番号の数字キー（1〜9）でも選べます。<br><br>
       <b>■ 遊び方のヒント</b><br>
       各地を調べたり関係者に話を聞いたりして手がかりを集め、「手帳」に記録された証拠を頼りに事件の真相を推理してください。行き詰まったら、相棒アキラに「アドバイスをもらう」と方針を教えてくれます。証拠が集まったら「指名する」で犯人を告発できます。誤った人物の指名は2回まで許されますが、3回目で事件は迷宮入りになります。
     </div>
@@ -1246,6 +1250,16 @@ hdSound.addEventListener('click', ()=>{ sfx.toggle(); updateSoundBtn(); });
 logEl.addEventListener('click', skipAllLog);
 document.addEventListener('click', (e)=>{
   if(e.target.closest && e.target.closest('button') && e.target.id !== 'hd-sound') sfx.click();
+});
+
+document.addEventListener('keydown', (e)=>{
+  if(e.ctrlKey || e.metaKey || e.altKey) return;
+  if(gameScreen.style.display === 'none' || endingScreen.style.display === 'flex') return;
+  const tag = (document.activeElement && document.activeElement.tagName) || '';
+  if(tag === 'INPUT' || tag === 'TEXTAREA') return;
+  if(!/^[1-9]$/.test(e.key)) return;
+  const btn = [...targetPanel.querySelectorAll('button')][Number(e.key) - 1];
+  if(btn && !btn.disabled){ e.preventDefault(); btn.click(); }
 });
 
 hdTitle.addEventListener('click', ()=>{
