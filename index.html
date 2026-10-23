@@ -1101,7 +1101,15 @@ function showEnding(key){
   const e = ENDINGS[key];
   endingTag.textContent = e.tag;
   endingTag.className = e.trueEnd ? 'true' : '';
-  endingText.textContent = e.text;
+  let body = e.text;
+  if(e.trueEnd){
+    const extra = [];
+    if(state.flags.has('clue_akira_call')) extra.push('社長のもとへ名乗らずに電話をかけていた若い男は、やはりアキラだった。「昔の話だ」――あの人はそう言って、息子の声から逃げ続けたのだ。');
+    if(state.flags.has('clue_akira_rumor')) extra.push('スナック「かもめ」のママが語った、身ごもったまま町を去った女性。その名を、アキラは母の遺品の中で初めて知ったという。');
+    if(state.flags.has('clue_domoto_confess')) extra.push('堂本は横領で裁かれるが、殺人の疑いは晴れた。彼のアリバイが、真相への最短距離を示していた。');
+    if(extra.length) body += '\n\n―― 後日 ――\n\n' + extra.join('\n\n');
+  }
+  endingText.textContent = body;
   if(e.trueEnd){
     creditsWrap.classList.add('show');
     credits.innerHTML = CREDITS_LINES.map(l=> l===''? '&nbsp;' : l).join('<br>');
