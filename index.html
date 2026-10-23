@@ -778,6 +778,10 @@ function resetLog(){
 }
 function flushPending(){
   if(pendingLog.some(t=> t.charAt(0) === '☆')) sfx.clue();
+  if(!state.flags.has('ready_notice') && ['clue_akira_knew','clue_akira_photo','clue_witness'].every(c=> state.flags.has(c))){
+    state.flags.add('ready_notice');
+    pendingLog.push('……ばらばらだった手がかりが、ひとつの像を結び始めている。「指名する」で、真相に踏み込めそうだ。');
+  }
   pendingLog.forEach(t=> logLine(t,'system'));
   pendingLog = [];
 }
