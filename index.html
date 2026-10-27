@@ -56,6 +56,8 @@ button{font-family:inherit;}
 }
 .title-buttons button:hover{background:var(--border);}
 .title-buttons button:disabled{opacity:.35;cursor:not-allowed;}
+#title-info{color:var(--fg-dim);font-size:12px;line-height:1.9;text-align:center;letter-spacing:.05em;}
+#title-info .got{color:var(--fg);}
 #howto{
   max-width:520px;font-size:12.5px;line-height:1.9;color:var(--fg-dim);
   background:rgba(255,255,255,0.02);border:1px solid var(--border);padding:14px 16px;text-align:left;border-radius:3px;
@@ -211,6 +213,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
       <button id="btn-continue" disabled>つづきから</button>
       <button id="btn-howto">あそびかた</button>
     </div>
+    <div id="title-info"></div>
     <div id="howto" class="hidden">
       <b>■ 操作方法</b><br>
       画面下のコマンド（調べる／話す／移動する／持ち物／手帳／指名する）を選ぶと、対象の一覧が表示されます。ボタンをタップ／クリックして選択してください。<br>
@@ -740,6 +743,34 @@ function loadGame(){
 function hasSave(){ try{ return !!localStorage.getItem(SAVE_KEY); }catch(e){ return false; } }
 function clearSave(){ try{ localStorage.removeItem(SAVE_KEY); }catch(e){} }
 
+const ENDINGS_KEY = 'minato_endings';
+function seenEndings(){
+  try{ const a = JSON.parse(localStorage.getItem(ENDINGS_KEY)||'[]'); return Array.isArray(a)? a : []; }catch(e){ return []; }
+}
+function recordEnding(key){
+  try{
+    const a = seenEndings();
+    if(!a.includes(key)){ a.push(key); localStorage.setItem(ENDINGS_KEY, JSON.stringify(a)); }
+  }catch(e){}
+}
+function renderTitleInfo(){
+  const el = document.getElementById('title-info');
+  if(!el) return;
+  const seen = seenEndings();
+  const names = {true_end:'真相', bad_domoto:'堂本', bad_miwa:'美和', bad_jiro:'次郎'};
+  const keys = Object.keys(names);
+  const lines = [];
+  const d = hasSave() ? loadGame() : null;
+  if(d && LOCATIONS[d.location]){
+    lines.push(`セーブ: ${d.day}日目 ／ ${LOCATIONS[d.location].name} ／ 手がかり ${d.clueOrder.length}/${Object.keys(CLUES).length}`);
+  }
+  if(seen.length){
+    lines.push('到達した結末 ' + seen.filter(k=>names[k]).length + '/' + keys.length + '　' +
+      keys.map(k=> seen.includes(k)? `<span class="got">●${names[k]}</span>` : '○？？').join(' '));
+  }
+  el.innerHTML = lines.join('<br>');
+}
+
 /* =========================================================
    DOM REFS
    ========================================================= */
@@ -1154,6 +1185,7 @@ function showEnding(key){
   endingTag.textContent = e.tag;
   endingTag.className = e.trueEnd ? 'true' : '';
   let body = e.text;
+  recordEnding(key);
   if(e.trueEnd){
     const extra = [];
     if(state.flags.has('clue_hotel_camera')) extra.push('ホテルの防犯カメラに残っていた黒いコートの男。顔は映っていなくとも、その歩き方は、毎日隣で見てきた相棒のものだった。');
@@ -1325,6 +1357,7 @@ hdTitle.addEventListener('click', ()=>{
   gameScreen.style.display='none';
   titleScreen.style.display='flex';
   btnContinue.disabled = !hasSave();
+  renderTitleInfo();
 });
 
 endingTitleBtn.addEventListener('click', ()=>{
@@ -1332,6 +1365,7 @@ endingTitleBtn.addEventListener('click', ()=>{
   gameScreen.style.display='none';
   titleScreen.style.display='flex';
   btnContinue.disabled = !hasSave();
+  renderTitleInfo();
 });
 
 btnHowto.addEventListener('click', ()=>{
@@ -1375,6 +1409,7 @@ function startGameScreen(isNew){
 }
 
 btnContinue.disabled = !hasSave();
+renderTitleInfo();
 </script>
 </body>
 </html>
