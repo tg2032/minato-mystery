@@ -1255,6 +1255,7 @@ function updateSceneVisual(){
       }, 300);
     }
   }
+  sceneChar.onerror = ()=>{ sceneChar.classList.remove('show'); };
   const talking = (ui.mode === 'talk-topic' || ui.mode === 'talk-showitem') && ui.npc && IMAGES[ui.npc];
   if(talking){
     if(sceneChar.getAttribute('data-npc') !== ui.npc){
