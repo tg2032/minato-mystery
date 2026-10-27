@@ -1163,6 +1163,15 @@ function showEnding(key){
     if(state.flags.has('clue_domoto_confess')) extra.push('堂本は横領で裁かれるが、殺人の疑いは晴れた。彼のアリバイが、真相への最短距離を示していた。');
     if(extra.length) body += '\n\n―― 後日 ――\n\n' + extra.join('\n\n');
   }
+  else {
+    const memo = [];
+    if(key==='bad_domoto' && state.flags.has('clue_domoto_verified')) memo.push('ホテルの記録は、堂本の無実をすでに示していた。確かめた事実を、指名の前に思い出すべきだった。');
+    const n = akiraEvidenceCount(state);
+    if(n>=AKIRA_NEEDED) memo.push('相棒への疑いを裏づける証拠は、すでに十分に揃っていた。目をそらしたのは、誰だったのか。');
+    else if(n>0) memo.push(`手帳には、ある人物を指す手がかりが${n}つ残っていた。あと${AKIRA_NEEDED-n}つ集まっていれば、結末は違ったかもしれない。`);
+    else memo.push('最も近くにいた人物の言動を、もう一度振り返るべきだった。');
+    body += '\n\n―― 捜査メモ ――\n\n' + memo.join('\n\n');
+  }
   endingText.textContent = body;
   if(e.trueEnd){
     creditsWrap.classList.add('show');
