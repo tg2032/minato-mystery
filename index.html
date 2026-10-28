@@ -867,7 +867,7 @@ function flushPending(){
 }
 
 const sfx = (function(){
-  let ctx = null, master = null, on = false, drone = null;
+  let ctx = null, master = null, on = false, amb = null, ambKey = null, nbuf = null;
   try{ on = localStorage.getItem('minato_sound') === '1'; }catch(e){}
   function ensure(){
     if(!ctx){
@@ -891,37 +891,81 @@ const sfx = (function(){
     o.connect(g); g.connect(master);
     o.start(); o.stop(ctx.currentTime + dur);
   }
-  function startDrone(){
-    if(drone || !ensure()) return;
+  /* Per-location ambient themes (very low volume) — crossfade on travel */
+  const THEMES = {
+    police:       {osc:[[55,'sine'],[82.6,'sine']], lfo:[0.12,0.012], gain:0.035},
+    office:       {osc:[[66,'sine'],[99,'sine']],   lfo:[0.09,0.010], gain:0.032},
+    pier:         {osc:[[47,'sine'],[70.5,'sine']], lfo:[0.16,0.016], gain:0.030,
+                   noise:{filter:'lowpass', freq:300, vol:0.05, lfo:[0.13,0.030]}},
+    apartment:    {osc:[[52,'sine'],[78,'sine']],   lfo:[0.22,0.014], gain:0.030},
+    brotherhouse: {osc:[[44,'sine'],[67,'sine']],   lfo:[0.05,0.020], gain:0.034},
+    hotel:        {osc:[[74,'sine'],[111,'sine']],  lfo:[0.07,0.008], gain:0.028},
+    bar:          {osc:[[58,'sine'],[87,'sine']],   lfo:[0.19,0.012], gain:0.030,
+                   noise:{filter:'bandpass', freq:1100, Q:0.7, vol:0.022, lfo:[0.3,0.012]}},
+    title:        {osc:[[50,'sine'],[75,'sine']],   lfo:[0.10,0.010], gain:0.028},
+    truth:        {osc:[[66,'sine'],[99,'sine'],[132,'sine']], lfo:[0.08,0.010], gain:0.036},
+    bad:          {osc:[[41,'sine'],[61.5,'sine']], lfo:[0.04,0.024], gain:0.036}
+  };
+  function brownNoise(){
+    if(nbuf) return nbuf;
+    const len = Math.floor(ctx.sampleRate * 2);
+    const b = ctx.createBuffer(1, len, ctx.sampleRate);
+    const d = b.getChannelData(0);
+    let v = 0;
+    for(let i=0;i<len;i++){ v += (Math.random()*2-1)*0.02; d[i] = v*3.5; }
+    nbuf = b; return b;
+  }
+  function buildAmb(key){
+    const t = THEMES[key] || THEMES.police;
     const g = ctx.createGain();
     g.gain.value = 0.0001;
-    g.gain.linearRampToValueAtTime(0.035, ctx.currentTime + 2);
+    g.gain.linearRampToValueAtTime(t.gain, ctx.currentTime + 2);
     g.connect(master);
-    const a = ctx.createOscillator(), b = ctx.createOscillator(), lfo = ctx.createOscillator(), lg = ctx.createGain();
-    a.type = 'sine'; a.frequency.value = 55;
-    b.type = 'sine'; b.frequency.value = 82.6;
-    lfo.frequency.value = 0.12; lg.gain.value = 0.012;
-    lfo.connect(lg); lg.connect(g.gain);
-    a.connect(g); b.connect(g);
-    a.start(); b.start(); lfo.start();
-    drone = {g, nodes:[a, b, lfo]};
+    const nodes = [];
+    t.osc.forEach(pair=>{
+      const o = ctx.createOscillator(); o.type = pair[1]; o.frequency.value = pair[0];
+      o.connect(g); o.start(); nodes.push(o);
+    });
+    const lfo = ctx.createOscillator(); lfo.frequency.value = t.lfo[0];
+    const lg = ctx.createGain(); lg.gain.value = t.lfo[1];
+    lfo.connect(lg); lg.connect(g.gain); lfo.start(); nodes.push(lfo);
+    if(t.noise){
+      const srcNode = ctx.createBufferSource(); srcNode.buffer = brownNoise(); srcNode.loop = true;
+      const filt = ctx.createBiquadFilter(); filt.type = t.noise.filter; filt.frequency.value = t.noise.freq;
+      if(t.noise.Q) filt.Q.value = t.noise.Q;
+      const ng = ctx.createGain(); ng.gain.value = t.noise.vol;
+      const nlfo = ctx.createOscillator(); nlfo.frequency.value = t.noise.lfo[0];
+      const nlg = ctx.createGain(); nlg.gain.value = t.noise.lfo[1];
+      nlfo.connect(nlg); nlg.connect(ng.gain); nlfo.start();
+      srcNode.connect(filt); filt.connect(ng); ng.connect(g); srcNode.start();
+      nodes.push(srcNode, nlfo);
+    }
+    amb = {g, nodes};
   }
-  function stopDrone(){
-    if(!drone) return;
-    const d = drone; drone = null;
-    d.g.gain.cancelScheduledValues(ctx.currentTime);
-    d.g.gain.linearRampToValueAtTime(0.0001, ctx.currentTime + 0.6);
-    setTimeout(()=>{ d.nodes.forEach(n=>{ try{ n.stop(); }catch(e){} }); }, 700);
+  function fadeAmb(){
+    if(!amb) return;
+    const a = amb; amb = null;
+    a.g.gain.cancelScheduledValues(ctx.currentTime);
+    a.g.gain.linearRampToValueAtTime(0.0001, ctx.currentTime + 0.6);
+    setTimeout(()=>{ a.nodes.forEach(n=>{ try{ n.stop(); }catch(e){} }); }, 700);
+  }
+  function setAmbience(key){
+    if(key === ambKey && (amb || !on)) return;
+    ambKey = key;
+    if(!on || !ensure()) return;
+    fadeAmb(); buildAmb(key);
   }
   return {
     isOn: ()=> on,
     toggle(){
       on = !on;
       try{ localStorage.setItem('minato_sound', on ? '1' : '0'); }catch(e){}
-      if(on){ ensure(); startDrone(); blip(660, 0.1, 0.05, 'triangle'); } else { stopDrone(); }
+      if(on){ ensure(); setAmbience(ambKey || 'title'); blip(660, 0.1, 0.05, 'triangle'); } else { fadeAmb(); }
       return on;
     },
-    resume(){ if(on){ ensure(); startDrone(); } },
+    resume(){ if(on){ ensure(); setAmbience(ambKey || 'police'); } },
+    ambience(k){ setAmbience(k); },
+    theme(){ return ambKey; },
     tick(){ blip(520 + Math.random() * 90, 0.03, 0.010); },
     click(){ blip(360, 0.07, 0.035); },
     clue(){ blip(660, 0.14, 0.05, 'triangle'); setTimeout(()=> blip(990, 0.22, 0.05, 'triangle'), 120); },
@@ -937,6 +981,7 @@ function renderHeader(){
   hdDay.textContent = state.day + '日目';
   hdLoc.textContent = LOCATIONS[state.location].name;
   sceneCaption.textContent = LOCATIONS[state.location].name;
+  sfx.ambience(state.location);
 }
 
 function clearTargetPanel(){ targetPanel.innerHTML=''; }
@@ -1218,6 +1263,7 @@ function showEnding(key){
   }
   clearSave();
   endingScreen.style.display = 'flex';
+  sfx.ambience(e.trueEnd ? 'truth' : 'bad');
 }
 
 /* =========================================================
@@ -1340,6 +1386,7 @@ hdSound.addEventListener('click', ()=>{ sfx.toggle(); updateSoundBtn(); });
 logEl.addEventListener('click', skipAllLog);
 document.addEventListener('click', (e)=>{
   if(e.target.closest && e.target.closest('button') && e.target.id !== 'hd-sound') sfx.click();
+  if(titleScreen.style.display !== 'none' && sfx.isOn()) sfx.resume();
 });
 
 document.addEventListener('keydown', (e)=>{
@@ -1358,6 +1405,7 @@ hdTitle.addEventListener('click', ()=>{
   titleScreen.style.display='flex';
   btnContinue.disabled = !hasSave();
   renderTitleInfo();
+  sfx.ambience('title');
 });
 
 endingTitleBtn.addEventListener('click', ()=>{
@@ -1366,6 +1414,7 @@ endingTitleBtn.addEventListener('click', ()=>{
   titleScreen.style.display='flex';
   btnContinue.disabled = !hasSave();
   renderTitleInfo();
+  sfx.ambience('title');
 });
 
 btnHowto.addEventListener('click', ()=>{
