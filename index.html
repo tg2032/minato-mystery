@@ -884,6 +884,9 @@ function renderTitleInfo(){
     lines.push('到達した結末 ' + seen.filter(k=>names[k]).length + '/' + keys.length + '　' +
       keys.map(k=> seen.includes(k)? `<span class="got">●${names[k]}</span>` : '○？？').join(' '));
   }
+  if(keys.every(k=> seen.includes(k))){
+    lines.push('<span class="got">★ 全結末コンプリート ― 港の事件簿は、これで閉じられた。</span>');
+  }
   el.innerHTML = lines.join('<br>');
 }
 
