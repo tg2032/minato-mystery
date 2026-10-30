@@ -306,6 +306,8 @@ const CLUES = {
 
 const AKIRA_EVIDENCE = ['clue_akira_knew','clue_akira_photo','clue_witness','clue_akira_rumor','clue_akira_call','clue_hotel_camera','clue_unsent_letter','clue_remittance','clue_miwa_told','clue_jiro_told','clue_gondola'];
 const AKIRA_NEEDED = 3;
+const PAST_CLUES = ['clue_remittance','clue_miwa_told','clue_gondola','clue_unsent_letter','clue_jiro_told'];
+function pastCount(s){ return PAST_CLUES.filter(c=> s.flags.has(c)).length; }
 function akiraEvidenceCount(s){ return AKIRA_EVIDENCE.filter(c=> s.flags.has(c)).length; }
 
 const CHAR_SPRITES = {
@@ -376,6 +378,18 @@ const NPCS = {
       {label:'凶器について', visible:(s)=> s.flags.has('clue_weapon') && !s.flags.has('clue_akira_knew'), run:(s)=>{
         giveClue(s,'clue_akira_knew');
         return '「凶器は鋭利な刃物、それも細身の……レターオペナーみたいなやつじゃないか？」\n\n（……まだ、正式には発表されていないはずだ。なぜアキラが、それを知っている？）';
+      }},
+      {label:'梶原の過去を整理する', visible:(s)=> pastCount(s) >= 3, run:(s)=>{
+        const L=['二人で、これまでの手がかりを時系列に並べてみた。'];
+        L.push('――二十数年前。梶原は、一人の女性と幼い男の子を、この街に残して去った。');
+        if(s.flags.has('clue_remittance')) L.push('――それから毎月、決まった日に、女性宛ての送金を欠かさなかった。');
+        if(s.flags.has('clue_miwa_told')) L.push('――酔うと、捨てた男の子のことを、寝言で漏らした。');
+        if(s.flags.has('clue_gondola')) L.push('――毎年十月、観覧車に一人で乗り、二枚の券を買った。向かいの席は、空のまま。');
+        if(s.flags.has('clue_unsent_letter')) L.push('――言葉にできなかった詫びは、封を切られない手紙になった。');
+        if(s.flags.has('clue_jiro_told')) L.push('――弟の次郎の手元には、「あきら」と呼ばれた男の子の写真が残っていた。');
+        L.push('アキラは黙って聞いていたが、やがて、ぽつりと言った。');
+        L.push(s.flags.has('clue_unsent_letter') ? '「……最後まで不器用な人だったんだな。」' : '「……それでも、あの人は俺に何も言わなかった。」');
+        return L.join('\n\n');
       }},
       {label:'自分について', run:(s)=>{
         if(s.flags.has('clue_akira_photo')){
