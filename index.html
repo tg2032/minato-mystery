@@ -335,6 +335,10 @@ function akiraHint(s){
   if(!s.flags.has('clue_witness')) return '「波止場にいる船越さんに、当夜のことを聞いてみるといい。」';
   if(!s.flags.has('clue_akira_photo')) return '「次郎の家……あそこには何か、古いものが残っていそうな気がする。」';
   if(!s.flags.has('clue_domoto_verified') && s.flags.has('clue_domoto_alibi')) return '「堂本の会食、裏は取れたのか？　桜木町のホテルで確認しておくといい。」';
+  if(akiraEvidenceCount(s) < AKIRA_NEEDED){
+    if(!s.flags.has('clue_loan_rumor') && !s.flags.has('clue_remittance')) return '「梶原の金の動きに妙な噂があるらしい。夜の中華街で、顔の広い店主に聞いてみたらどうだ。」';
+    if(!s.flags.has('clue_gondola') && (s.flags.has('clue_akira_rumor') || s.flags.has('clue_akira_photo') || s.flags.has('clue_akira_call'))) return '「梶原が毎年通っていた場所があるそうだ。夜の観覧車を当たってみる価値はある。」';
+  }
   if(akiraEvidenceCount(s) < AKIRA_NEEDED) return '「まだ何か見落としていないか？　スナックのママやホテルの映像、それに疑いの晴れた人たちにも、もう一度話を聞いてみろ。」';
   if(!s.flags.has('clue_gondola') && (s.flags.has('clue_akira_rumor') || s.flags.has('clue_akira_call')) && s.flags.has('clue_unsent_letter')) return '「夜の観覧車の係員が、梶原のことをよく知っているらしい。行ってみる価値はある。」';
   if(!s.flags.has('clue_unsent_letter') && (s.flags.has('clue_akira_rumor') || s.flags.has('clue_akira_photo'))) return '「……赤レンガ倉庫の詰所に、梶原の昔を知る人がいると聞いた。一度、行ってみたらどうだ。」';
