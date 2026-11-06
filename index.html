@@ -217,7 +217,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
     <div id="howto" class="hidden">
       <b>■ 操作方法</b><br>
       画面下のコマンド（調べる／話す／移動する／持ち物／手帳／指名する）を選ぶと、対象の一覧が表示されます。ボタンをタップ／クリックして選択してください。<br>
-      いちばん下の入力欄に「しらべる」「はなす」のように打ち込んでも反応します。PCでは、対象の一覧に表示される番号の数字キー（1〜9）でも選べます。<br><br>
+      いちばん下の入力欄に「しらべる」「はなす」のように打ち込んでも反応します。PCでは、対象の一覧に表示される番号の数字キーでも選べます（10番以降は「1」「0」のように続けて入力、Escキーで「もどる」）。<br><br>
       <b>■ 遊び方のヒント</b><br>
       各地を調べたり関係者に話を聞いたりして手がかりを集め、「手帳」に記録された証拠を頼りに事件の真相を推理してください。行き詰まったら、相棒アキラに「アドバイスをもらう」と方針を教えてくれます。証拠が集まったら「指名する」で犯人を告発できます。誤った人物の指名は2回まで許されますが、3回目で事件は迷宮入りになります。ただし、決め手を欠いたまま有力な容疑者を指名すると、真相を取り逃がして幕を閉じることもあります。
     </div>
@@ -1174,7 +1174,7 @@ function addHint(text){
   targetPanel.appendChild(d);
 }
 function addBackBtn(label, onClick){
-  addBtn(label||'← もどる', 'back', onClick);
+  addBtn(label||'← もどる', 'back', onClick || doBack);
 }
 
 function currentNpcList(){
@@ -1591,10 +1591,31 @@ document.addEventListener('keydown', (e)=>{
   if(gameScreen.style.display === 'none' || endingScreen.style.display === 'flex') return;
   const tag = (document.activeElement && document.activeElement.tagName) || '';
   if(tag === 'INPUT' || tag === 'TEXTAREA') return;
-  if(!/^[1-9]$/.test(e.key)) return;
-  const btn = [...targetPanel.querySelectorAll('button')][Number(e.key) - 1];
-  if(btn && !btn.disabled){ e.preventDefault(); btn.click(); }
+  const btns = [...targetPanel.querySelectorAll('button')];
+  const press = (n)=>{ const btn = btns[n - 1]; if(btn && !btn.disabled) btn.click(); };
+  if(e.key === 'Escape'){
+    const back = targetPanel.querySelector('button.back');
+    if(back){ e.preventDefault(); back.click(); }
+    return;
+  }
+  if(!/^[0-9]$/.test(e.key)) return;
+  e.preventDefault();
+  /* 10個以上の一覧では、2桁（10・11・12…）を続けて入力して選べる */
+  if(keyBuf){
+    const n = Number(keyBuf + e.key);
+    clearTimeout(keyTimer); keyBuf = '';
+    press(n <= btns.length ? n : Number(e.key));
+    return;
+  }
+  if(e.key === '0') return;
+  if(btns.length >= 10 && Number(e.key) * 10 <= btns.length + 9){
+    keyBuf = e.key;
+    keyTimer = setTimeout(()=>{ keyBuf = ''; press(Number(e.key)); }, 600);
+    return;
+  }
+  press(Number(e.key));
 });
+let keyBuf = '', keyTimer = null;
 
 hdTitle.addEventListener('click', ()=>{
   saveGame();
