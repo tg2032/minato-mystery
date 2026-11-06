@@ -896,9 +896,9 @@ function loadGame(){
     if(!raw) return null;
     const d = JSON.parse(raw);
     return {
-      day:d.day, location:d.location,
-      flags:new Set(d.flags), items:new Set(d.items),
-      clueOrder:d.clueOrder||[], travelCount:d.travelCount||0,
+      day:Number(d.day)||1, location:LOCATIONS[d.location] ? d.location : 'police',
+      flags:new Set(Array.isArray(d.flags) ? d.flags : []), items:new Set(Array.isArray(d.items) ? d.items : []),
+      clueOrder:(Array.isArray(d.clueOrder) ? d.clueOrder : []).filter(c=> CLUES[c]), travelCount:d.travelCount||0,
       accuseFails:d.accuseFails||0
     };
   }catch(e){ return null; }
