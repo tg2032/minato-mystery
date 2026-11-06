@@ -336,6 +336,7 @@ function akiraHint(s){
   if(!s.flags.has('clue_akira_photo')) return '「次郎の家……あそこには何か、古いものが残っていそうな気がする。」';
   if(!s.flags.has('clue_domoto_verified') && s.flags.has('clue_domoto_alibi')) return '「堂本の会食、裏は取れたのか？　桜木町のホテルで確認しておくといい。」';
   if(akiraEvidenceCount(s) < AKIRA_NEEDED){
+    if(s.flags.has('clue_loveletter') && !s.flags.has('clue_miwa_cleared')) return '「美和は本当に疑わしいのか？　事件の夜の足取りを、山下公園あたりで当たってみるといい。」';
     if(!s.flags.has('clue_loan_rumor') && !s.flags.has('clue_remittance')) return '「梶原の金の動きに妙な噂があるらしい。夜の中華街で、顔の広い店主に聞いてみたらどうだ。」';
     if(!s.flags.has('clue_gondola') && (s.flags.has('clue_akira_rumor') || s.flags.has('clue_akira_photo') || s.flags.has('clue_akira_call'))) return '「梶原が毎年通っていた場所があるそうだ。夜の観覧車を当たってみる価値はある。」';
   }
