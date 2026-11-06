@@ -236,12 +236,12 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
     <div id="canvas-wrap">
       <div id="scene-bg"></div>
       <img id="scene-char" src="" alt="">
-      <div id="scene-caption"></div>
+      <div id="scene-caption" aria-live="polite"></div>
     </div>
 
-    <div id="log"></div>
+    <div id="log" role="log" aria-live="polite" aria-label="物語の記録"></div>
 
-    <div id="command-bar">
+    <div id="command-bar" role="group" aria-label="コマンド">
       <button data-cmd="examine">調べる</button>
       <button data-cmd="talk">話す</button>
       <button data-cmd="travel">移動する</button>
@@ -250,10 +250,10 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
       <button data-cmd="accuse">指名する</button>
     </div>
 
-    <div id="target-panel"></div>
+    <div id="target-panel" role="group" aria-label="選択肢"></div>
 
     <div id="input-row">
-      <input id="text-input" type="text" placeholder="コマンドを入力（例：しらべる）" autocomplete="off">
+      <input id="text-input" type="text" aria-label="コマンド入力" placeholder="コマンドを入力（例：しらべる）" autocomplete="off">
       <button id="text-submit">実行</button>
     </div>
   </div>
