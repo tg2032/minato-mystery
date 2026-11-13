@@ -325,6 +325,13 @@ const CHAR_SPRITES = {
   ryu:{name:'店主 劉'}
 };
 
+function akiraTimeNote(){
+  const m = state.clock;
+  if(m >= 22*60) return '\n\n「それと、もう遅い。聞き込みは空振りになりやすい時間だ。署に戻って、少し休んでおくのも手だぞ。」';
+  if(m >= 19*60) return '\n\n「夜になった。この時間は、夕方から動く店や施設を当たるには、ちょうどいい。」';
+  if(m < 11*60) return '\n\n「まだ朝のうちだ。観覧車や中華街、倉庫の周りは、日が傾いてからでないと開かないぞ。」';
+  return '';
+}
 function akiraHint(s){
   if(!s.flags.has('clue_autopsy')) return '「まずは署にある検死報告書に目を通しておいた方がいい。」';
   if(!s.flags.has('clue_weapon')) return '「現場の事務所――被害者のデスクを、もう一度よく調べてみたらどうだ？」';
@@ -378,7 +385,7 @@ const NPCS = {
   akira:{
     ...CHAR_SPRITES.akira,
     topics:[
-      {label:'アドバイスをもらう', run:(s)=> akiraHint(s)},
+      {label:'アドバイスをもらう', run:(s)=> akiraHint(s) + akiraTimeNote()},
       {label:'事件について', run:()=> '「怨恨か、金か……こういう事件はだいたい、身近な人間の仕業と相場が決まってるものさ。」'},
       {label:'凶器について', visible:(s)=> s.flags.has('clue_weapon') && !s.flags.has('clue_akira_knew'), run:(s)=>{
         giveClue(s,'clue_akira_knew');
