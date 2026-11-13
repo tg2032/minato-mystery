@@ -836,6 +836,10 @@ const ENDINGS = {
     tag:'TRUE END ― 毎月の送金', trueEnd:true,
     text:'「……よく分かったな。」\n\nアキラは静かに笑った。これまで見せたことのない、乾いた笑みだった。\n\n「梶原長一は、俺の父親だ。二十数年前、母を捨てた男。……せめて一言、詫びの言葉が欲しかった。それだけだったんだ。」\n\nあなたは、横浜中華街の店主から聞いた話を、静かに告げた。毎月、決まった日に、両替所を通して送られていた金のことを。\n\n「……知っていたさ。母の通帳に、毎月同じ日に同じ額が入っていた。一度も、使ってはいなかった。母は、あの人からの金だと分かっていたんだ。それでも、手をつけなかった。」\n\n「俺は、それを施しだと思っていた。母を捨てた男の、罪滅ぼしの真似事だと。……だが、二十年以上、一度も欠かさず送り続けた男を、俺は、あの夜、」\n\nアキラは言葉を切り、両手を差し出した。\n\n「金で済ませたつもりの男と、金に触れなかった母。どっちも、不器用な親だったんだろうな。」\n\nあなたは、相棒に手錠をかけた。かけながら、あの通帳を、母の墓前に持っていこうと思った。毎月、欠かさず積まれた数字の列を、いつか彼が、ただの金額ではなく、一人の男の二十年として読める日が来ることを願って。\n\n港の夜景は、今夜も変わらず美しかった。'
   },
+  true_gondola:{
+    tag:'TRUE END ― 二枚の券', trueEnd:true,
+    text:'「……よく分かったな。」\n\nアキラは静かに笑った。これまで見せたことのない、乾いた笑みだった。\n\n「梶原長一は、俺の父親だ。二十数年前、母を捨てた男。……せめて一言、詫びの言葉が欲しかった。それだけだったんだ。」\n\nあなたは、大観覧車の係員から聞いた話を、ゆっくりと口にした。毎年十月、閉園間際に、一人で現れる男。買う券は、いつも二枚。\n\n「……二枚、か。」\n\nアキラは、しばらく黙っていた。\n\n「あの人は、毎年、誰を乗せるつもりだったんだろうな。母か。俺か。それとも、一緒に乗れなかった二十数年か。……向かいの席が空いたままだったのは、あの人が、まだ迎えに来る勇気を持てなかったからだ。俺は、それを、待たなかった。」\n\nあなたは、相棒に手錠をかけた。港の観覧車が、夜空に静かに光の輪を回している。\n\n「いつか出所したら、あの観覧車に乗ってみるよ。……券は、二枚買う。」\n\nあなたは、うなずくことしかできなかった。'
+  },
   false_domoto:{
     tag:'NORMAL END ― 偽りの解決',
     text:'裏帳簿を突きつけられた堂本は、横領だけでなく、社長殺害についても取り調べを受けた。\n\n動機はある。機会もあるように見えた。世間は「横領の発覚を恐れた専務の犯行」という筋書きに飛びついた。\n\n堂本は否認を続けたが、起訴された。\n\n――数か月後。法廷で、当夜のホテルの記録が提出されたとき、傍聴席がざわめいた。堂本は、犯行時刻にレストランの席にいたのだ。\n\n判決は無罪。だが、本当の犯人は、その間もずっと、あなたのすぐ隣にいた。\n\n事件は「解決した」ことになった。ただ、真相だけが置き去りにされた。'
@@ -929,7 +933,7 @@ function renderTitleInfo(){
   const el = document.getElementById('title-info');
   if(!el) return;
   const seen = seenEndings();
-  const names = {true_end:'真相', true_letter:'手紙', true_wheel:'観覧車', true_remit:'送金', false_domoto:'偽・堂本', false_miwa:'偽・美和', false_jiro:'偽・次郎', bad_domoto:'堂本', bad_miwa:'美和', bad_jiro:'次郎'};
+  const names = {true_end:'真相', true_letter:'手紙', true_wheel:'観覧車', true_remit:'送金', true_gondola:'二枚の券', false_domoto:'偽・堂本', false_miwa:'偽・美和', false_jiro:'偽・次郎', bad_domoto:'堂本', bad_miwa:'美和', bad_jiro:'次郎'};
   const keys = Object.keys(names);
   const lines = [];
   const d = hasSave() ? loadGame() : null;
@@ -1392,7 +1396,7 @@ function confirmAccuse(){
       saveGame();
       return;
     }
-    showEnding(state.flags.has('clue_unsent_letter') && state.flags.has('clue_gondola') ? 'true_wheel' : state.flags.has('clue_unsent_letter') ? 'true_letter' : state.flags.has('clue_remittance') ? 'true_remit' : 'true_end');
+    showEnding(state.flags.has('clue_unsent_letter') && state.flags.has('clue_gondola') ? 'true_wheel' : state.flags.has('clue_unsent_letter') ? 'true_letter' : state.flags.has('clue_remittance') ? 'true_remit' : state.flags.has('clue_gondola') ? 'true_gondola' : 'true_end');
     return;
   }
   const f = state.flags;
@@ -1433,7 +1437,7 @@ function showEnding(key){
     if(state.flags.has('clue_remittance') && key!=='true_remit') extra.push('梶原が二十数年続けた毎月の送金は、アキラの母の口座に届いていた。母は一度も、その金に手をつけていなかったという。');
     if(state.flags.has('clue_miwa_told')) extra.push('美和は後に、こう語った。「あの人が最後まで気にかけていたのは、私ではなかったのだと思います。それでも、嘘のない人でした。」');
     if(state.flags.has('clue_jiro_told')) extra.push('次郎は、古い写真を一枚だけ、アキラに手渡した。裏には、幼い字で「とうさん」と書かれていたという。');
-    if(state.flags.has('clue_gondola') && key!=='true_wheel') extra.push('観覧車の係員は、次の十月、空のゴンドラの向かいに、アキラの姿を見かけたという。券は、二枚だった。');
+    if(state.flags.has('clue_gondola') && key!=='true_wheel' && key!=='true_gondola') extra.push('観覧車の係員は、次の十月、空のゴンドラの向かいに、アキラの姿を見かけたという。券は、二枚だった。');
     if(state.flags.has('clue_domoto_confess')) extra.push('堂本は横領で裁かれるが、殺人の疑いは晴れた。彼のアリバイが、真相への最短距離を示していた。');
     if(extra.length) body += '\n\n―― 後日 ――\n\n' + extra.join('\n\n');
   }
