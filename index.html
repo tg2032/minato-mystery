@@ -82,7 +82,7 @@ button{font-family:inherit;}
 #canvas-wrap{position:relative;background:#000;border-bottom:1px solid var(--border);aspect-ratio:16/9;overflow:hidden;}
 #scene-bg{
   position:absolute;inset:0;background-color:#000;background-size:cover;background-position:center;
-  transition:opacity .3s ease;
+  transition:opacity .3s ease, filter 1.2s ease;
 }
 #scene-char{
   position:absolute;right:12px;bottom:12px;width:36%;max-width:210px;
@@ -709,7 +709,7 @@ const LOCATIONS = {
     ]
   },
   hotel:{
-    name:'桜木町のホテル', bg:'hotel', npcs:['yamagishi'],
+    name:'桜木町のホテル', bg:'hotel', npcs:['yamagishi'], via:'桜木町駅前のホテルへ向かった。',
     first:'桜木町駅近くのシティホテル。夜でもロビーには人の気配があり、フロントの奥に防犯カメラのモニターが見える。',
     repeat:'桜木町のホテル。ロビーの時計の針が、静かに進んでいる。',
     examine:[
@@ -727,7 +727,7 @@ const LOCATIONS = {
     ]
   },
   warehouse:{
-    name:'赤レンガ倉庫', bg:'warehouse', npcs:['komatsu'],
+    name:'赤レンガ倉庫', bg:'warehouse', npcs:['komatsu'], openFrom:1020, via:'日本大通りから、赤レンガパークへ歩いた。',
     first:'夕暮れの赤レンガ倉庫。観光客の去った広場に、古い詰所の灯りだけがともっている。',
     repeat:'赤レンガ倉庫。潮風に混じって、古いレンガの匂いがする。',
     examine:[
@@ -736,7 +736,7 @@ const LOCATIONS = {
     ]
   },
   park:{
-    name:'山下公園', bg:'park', npcs:[],
+    name:'山下公園', bg:'park', npcs:[], openFrom:1080, via:'海沿いの道を、山下公園へ向かった。',
     first:'海沿いの遊歩道が続く山下公園。港に停泊する大きな船が、夕闇の中に静かに浮かんでいる。',
     repeat:'山下公園。遊歩道を、潮風が抜けていく。',
     examine:[
@@ -750,11 +750,11 @@ const LOCATIONS = {
         }
         return 'ベンチの花束は、まだ枯れていない。美和は、あの夜ここにいたのだ。';
       }},
-      {id:'ship', label:'港に浮かぶ大きな船', run:()=> '古い客船が、岸壁に静かに係留されている。夜になると、船体の灯りが水面に揺れるそうだ。'}
+      {id:'ship', label:'港に浮かぶ大きな船', run:()=> '歴史ある客船「氷川丸」が、岸壁に静かに係留されている。夜になると、船体の灯りが水面に揺れるそうだ。'}
     ]
   },
   wheel:{
-    name:'大観覧車', bg:'wheel', npcs:['kimura'],
+    name:'大観覧車', bg:'wheel', npcs:['kimura'], openFrom:1170, via:'桜木町駅から動く歩道で、大観覧車のある一角へ向かった。',
     first:'夜のみなとみらいに、大観覧車の光が回っている。乗り場の券売所に、まだ灯りがともっていた。',
     repeat:'大観覧車。色とりどりの光が、ゆっくりと夜空を巡っている。',
     examine:[
@@ -763,7 +763,7 @@ const LOCATIONS = {
     ]
   },
   chinatown:{
-    name:'横浜中華街', bg:'china', npcs:['ryu'],
+    name:'横浜中華街', bg:'china', npcs:['ryu'], openFrom:1140, via:'みなとみらい線で、元町・中華街駅へ向かった。',
     first:'夜の横浜中華街。赤い提灯が連なる路地に、店じまいを始めた料理店の灯りがともっている。',
     repeat:'横浜中華街。提灯の赤が、濡れた石畳に揺れている。',
     examine:[
@@ -772,7 +772,7 @@ const LOCATIONS = {
     ]
   },
   bar:{
-    name:'スナック「かもめ」', bg:'bar', npcs:['mama'],
+    name:'スナック「かもめ」', bg:'bar', npcs:['mama'], openFrom:1140,
     first:'みなとみらいの片隅、赤レンガ倉庫にほど近い小さなスナック。カウンターだけの、昔ながらの店だ。',
     repeat:'スナック「かもめ」。今日もママが、カウンターを磨いている。',
     examine:[
@@ -875,7 +875,7 @@ let ui = {mode:'idle', npc:null, suspect:null};
 let pendingLog = [];
 
 function newState(){
-  return {day:1, location:'police', flags:new Set(), items:new Set(), clueOrder:[], travelCount:0, accuseFails:0};
+  return {day:1, clock:490, location:'police', flags:new Set(), items:new Set(), clueOrder:[], travelCount:0, accuseFails:0};
 }
 
 function giveClue(s,id){
@@ -892,11 +892,24 @@ function giveItem(s,name){
   }
 }
 
+const MEET_LINES = {
+  chief:'署長は書類から顔を上げ、眼鏡の奥から鋭い視線を向けた。',
+  tanaka:'秘書の田中は、きちんと整えた髪に手をやり、小さく会釈した。目の下には隈がある。',
+  domoto:'堂本は上等なスーツの襟を直し、苛立ちを隠すように腕を組んだ。',
+  yamagishi:'フロントの山岸は、愛想のよい笑みを浮かべながらも、手元の宿泊台帳を閉じた。',
+  komatsu:'詰所の小松は、湯呑みを置いてゆっくりと立ち上がった。長年の巡回で、足を少し引きずっている。',
+  funakoshi:'漁網を繕う手を止め、船越は日に焼けた顔をこちらへ向けた。',
+  miwa:'美和は伏せていた目を上げた。泣いたあとのように、瞼が赤い。',
+  jiro:'次郎は玄関先で、作業着の袖をまくったまま、無愛想にこちらを見た。',
+  mama:'カウンターの内側で、ママはグラスを拭く手を止め、ふっと笑った。',
+  kimura:'発券窓口の木村は、制帽のつばに触れて、丁寧に頭を下げた。',
+  ryu:'店先で湯気を上げる鍋の向こうから、劉が人懐こい笑顔でこちらを見た。'
+};
 const SAVE_KEY = 'minato_mystery_save_v1';
 function saveGame(){
   try{
     localStorage.setItem(SAVE_KEY, JSON.stringify({
-      day:state.day, location:state.location,
+      day:state.day, clock:state.clock, location:state.location,
       flags:[...state.flags], items:[...state.items],
       clueOrder:state.clueOrder, travelCount:state.travelCount,
       accuseFails:state.accuseFails
@@ -909,7 +922,7 @@ function loadGame(){
     if(!raw) return null;
     const d = JSON.parse(raw);
     return {
-      day:Number(d.day)||1, location:LOCATIONS[d.location] ? d.location : 'police',
+      day:Number(d.day)||1, clock:(Number(d.clock)>=0 && Number(d.clock)<1440) ? Number(d.clock) : 540, location:LOCATIONS[d.location] ? d.location : 'police',
       flags:new Set(Array.isArray(d.flags) ? d.flags : []), items:new Set(Array.isArray(d.items) ? d.items : []),
       clueOrder:(Array.isArray(d.clueOrder) ? d.clueOrder : []).filter(c=> CLUES[c]), travelCount:d.travelCount||0,
       accuseFails:d.accuseFails||0
@@ -1164,10 +1177,24 @@ const sfx = (function(){
    RENDER
    ========================================================= */
 
+function fmtClock(m){ return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'); }
+function tick(m){
+  state.clock += m;
+  if(state.clock >= 23*60+30){
+    state.day++;
+    state.clock = 8*60+30;
+    logLine('夜も更けた。いったん捜査を切り上げ、署の仮眠室で休んだ。――翌朝、'+state.day+'日目が始まる。', 'system');
+  }
+}
+function applyTint(){
+  const h = state.clock/60;
+  sceneBg.style.filter = (h>=19.5 || h<6) ? 'brightness(.8) saturate(.9)' : (h>=16.5 ? 'sepia(.22) saturate(1.1)' : 'none');
+}
 function renderHeader(){
-  hdDay.textContent = state.day + '日目';
+  hdDay.textContent = state.day + '日目 ' + fmtClock(state.clock);
   hdLoc.textContent = LOCATIONS[state.location].name;
-  sceneCaption.textContent = LOCATIONS[state.location].name;
+  sceneCaption.textContent = LOCATIONS[state.location].name + ' ・ ' + fmtClock(state.clock);
+  applyTint();
   sfx.ambience(state.location);
 }
 
@@ -1217,6 +1244,7 @@ function renderTargetPanel(){
         logLine('▶ '+entry.label, 'action');
         const text = entry.run(state);
         logLine(text, 'narration');
+        tick(5);
         flushPending();
         renderAll();
         saveGame();
@@ -1231,6 +1259,8 @@ function renderTargetPanel(){
       addBtn(npcDisplayName(id) + (id==='akira' ? '（相棒）':''), null, ()=>{
         ui.npc = id; ui.mode = 'talk-topic';
         logLine('◆ '+npcDisplayName(id)+'に話しかけた。', 'action');
+        const mk = 'met_'+id;
+        if(MEET_LINES[id] && !state.flags.has(mk)){ state.flags.add(mk); logLine(MEET_LINES[id], 'narration'); }
         renderAll();
       });
     });
@@ -1245,6 +1275,7 @@ function renderTargetPanel(){
       addBtn(topic.label, null, ()=>{
         logLine('◆ '+topic.label, 'action');
         const text = topic.run(state);
+        tick(8);
         logLine(npc.name, 'speaker');
         logLine(text, 'dialogue');
         flushPending();
@@ -1312,6 +1343,12 @@ function renderTargetPanel(){
   }
 
   if(mode==='notebook'){
+    const cf = document.createElement('div');
+    cf.className = 'note-card';
+    cf.innerHTML = '<div class="t">■ 事件概要　港署 事件番号 第0417号</div><div class="d">被害者：梶原長一（梶原商会 社長）。発見場所：同社事務所。'
+      + (state.flags.has('clue_autopsy') ? '死亡推定時刻：前夜21時〜22時。凶器：鋭利な刃物。' : '検視結果は未確認。')
+      + '現在 '+state.day+'日目 '+fmtClock(state.clock)+'。</div>';
+    targetPanel.appendChild(cf);
     addHint('手がかり '+state.clueOrder.length+' / '+Object.keys(CLUES).length);
     if(state.clueOrder.length===0){
       addHint('手帳には、まだ何も記されていない。');
@@ -1370,8 +1407,13 @@ function doTravel(locId){
   sfx.move();
   state.location = locId;
   state.travelCount++;
-  state.day = 1 + Math.floor(state.travelCount/5);
   const loc = LOCATIONS[locId];
+  if(loc.via) logLine(loc.via, 'narration');
+  tick(25);
+  if(loc.openFrom && state.clock < loc.openFrom){
+    state.clock = loc.openFrom + 5;
+    logLine('店や施設が動き出す夕刻まで、周辺で聞き込みをして時間をつぶした。', 'system');
+  }
   const key = 'visited_'+locId;
   logLine('― '+loc.name+' ―', 'location');
   if(!state.flags.has(key)){

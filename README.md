@@ -26,3 +26,10 @@
 - 生成環境: ComfyUI（ローカル）、チェックポイント `majicmixRealistic_v6`、アップスケールに RealESRGAN x4plus
 - 警察署背景のタワーの形状は、次の写真を ControlNet（Canny）の輪郭ガイドとして参照しています。生成画像に写真そのものは含まれません。
   - [Yokohama-Landmark-Tower-00.jpg](https://commons.wikimedia.org/wiki/File:Yokohama-Landmark-Tower-00.jpg)（Wikimedia Commons、CC BY-SA 3.0）
+
+
+## リアリティ演出
+- ゲーム内時計(出勤8時台から、移動・調査・聞き込みで進行)。夜が更けると仮眠して翌日へ。
+- 赤レンガ倉庫・山下公園・中華街・大観覧車・スナックは夕方以降に開くため、早く着くと時間待ちが入ります。
+- 時刻に応じて背景の明暗が変わります。
+- 手帳に事件概要(事件番号・検視結果)、初対面の人物ごとの描写、実在の駅・施設(桜木町駅・元町・中華街駅・氷川丸など)を反映。
