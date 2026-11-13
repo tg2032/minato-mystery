@@ -1217,9 +1217,11 @@ function addBackBtn(label, onClick){
   addBtn(label||'← もどる', 'back', onClick || doBack);
 }
 
+const NPC_AWAY = {tanaka:{from:1140, note:'事務所の灯りは落ち、秘書の田中はすでに退社したようだ。話を聞くなら、明日の朝だろう。'}};
+function npcAway(id){ const a = NPC_AWAY[id]; return !!(a && state.clock >= a.from); }
 function currentNpcList(){
   const loc = LOCATIONS[state.location];
-  const ids = (loc.npcs||[]).slice();
+  const ids = (loc.npcs||[]).filter(id=> !npcAway(id));
   ids.push('akira');
   return ids;
 }
@@ -1422,6 +1424,7 @@ function doTravel(locId){
   } else {
     logLine(loc.repeat, 'narration');
   }
+  (loc.npcs||[]).forEach(id=>{ if(npcAway(id)) logLine(NPC_AWAY[id].note, 'system'); });
   ui.mode = 'idle';
   renderAll();
   saveGame();
