@@ -883,13 +883,15 @@ let ui = {mode:'idle', npc:null, suspect:null};
 let pendingLog = [];
 
 function newState(){
-  return {day:1, clock:490, location:'police', flags:new Set(), items:new Set(), clueOrder:[], travelCount:0, accuseFails:0};
+  return {day:1, clock:490, location:'police', flags:new Set(), items:new Set(), clueOrder:[], clueMeta:{}, travelCount:0, accuseFails:0};
 }
 
 function giveClue(s,id){
   if(!s.flags.has(id)){
     s.flags.add(id);
     s.clueOrder.push(id);
+    if(!s.clueMeta) s.clueMeta = {};
+    s.clueMeta[id] = {day:s.day, clock:s.clock, loc:s.location};
     pendingLog.push('☆ 手帳に「'+CLUES[id].title+'」を記録した。');
   }
 }
@@ -919,7 +921,7 @@ function saveGame(){
     localStorage.setItem(SAVE_KEY, JSON.stringify({
       day:state.day, clock:state.clock, location:state.location,
       flags:[...state.flags], items:[...state.items],
-      clueOrder:state.clueOrder, travelCount:state.travelCount,
+      clueOrder:state.clueOrder, clueMeta:state.clueMeta||{}, travelCount:state.travelCount,
       accuseFails:state.accuseFails
     }));
   }catch(e){}
@@ -932,7 +934,7 @@ function loadGame(){
     return {
       day:Number(d.day)||1, clock:(Number(d.clock)>=0 && Number(d.clock)<1440) ? Number(d.clock) : 540, location:LOCATIONS[d.location] ? d.location : 'police',
       flags:new Set(Array.isArray(d.flags) ? d.flags : []), items:new Set(Array.isArray(d.items) ? d.items : []),
-      clueOrder:(Array.isArray(d.clueOrder) ? d.clueOrder : []).filter(c=> CLUES[c]), travelCount:d.travelCount||0,
+      clueOrder:(Array.isArray(d.clueOrder) ? d.clueOrder : []).filter(c=> CLUES[c]), clueMeta:(d.clueMeta && typeof d.clueMeta==='object') ? d.clueMeta : {}, travelCount:d.travelCount||0,
       accuseFails:d.accuseFails||0
     };
   }catch(e){ return null; }
@@ -1367,7 +1369,9 @@ function renderTargetPanel(){
         const c = CLUES[id];
         const card = document.createElement('div');
         card.className = 'note-card';
-        card.innerHTML = '<div class="t">◆ '+c.title+'</div><div class="d">'+c.text+'</div>';
+        const mt = state.clueMeta && state.clueMeta[id];
+        const when = (mt && LOCATIONS[mt.loc]) ? '<div class="d" style="opacity:.65;font-size:.85em">'+mt.day+'日目 '+fmtClock(mt.clock)+' ／ '+LOCATIONS[mt.loc].name+'で入手</div>' : '';
+        card.innerHTML = '<div class="t">◆ '+c.title+'</div><div class="d">'+c.text+'</div>'+when;
         targetPanel.appendChild(card);
       });
     }
