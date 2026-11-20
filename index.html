@@ -1232,7 +1232,7 @@ function addBackBtn(label, onClick){
   addBtn(label||'← もどる', 'back', onClick || doBack);
 }
 
-const NPC_AWAY = {tanaka:{from:hm(19), note:'事務所の灯りは落ち、秘書の田中はすでに退社したようだ。話を聞くなら、明日の朝だろう。'}};
+const NPC_AWAY = {jiro:{from:hm(22), note:'次郎の家の灯りは消えている。もう寝てしまったようだ。出直すなら、明日の朝だろう。'}, tanaka:{from:hm(19), note:'事務所の灯りは落ち、秘書の田中はすでに退社したようだ。話を聞くなら、明日の朝だろう。'}};
 function npcAway(id){ const a = NPC_AWAY[id]; return !!(a && state.clock >= a.from); }
 function currentNpcList(){
   const loc = LOCATIONS[state.location];
