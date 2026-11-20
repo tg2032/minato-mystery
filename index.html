@@ -185,7 +185,7 @@ button{font-family:inherit;}
 button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 
 @media (max-width:480px){
-  #header .loc-name{display:none;}
+  #header .loc-name{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
   #log{font-size:13px;}
   #header{padding:6px 10px;gap:8px;}
   #header > div:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -326,12 +326,16 @@ const CHAR_SPRITES = {
   ryu:{name:'店主 劉'}
 };
 
-function akiraTimeNote(){
-  const m = state.clock;
-  if(m >= 22*60) return '\n\n「それと、もう遅い。聞き込みは空振りになりやすい時間だ。署に戻って、少し休んでおくのも手だぞ。」';
-  if(m >= 19*60) return '\n\n「夜になった。この時間は、夕方から動く店や施設を当たるには、ちょうどいい。」';
-  if(m < 11*60) return '\n\n「まだ朝のうちだ。観覧車や中華街、倉庫の周りは、日が傾いてからでないと開かないぞ。」';
-  return '';
+const hm = (h,m=0)=> h*60+m;
+const CLOCK = {start:hm(8,10), wake:hm(8,30), sleep:hm(23,30), fallback:hm(9)};
+function akiraTimeNote(s){
+  const m = state.clock; const gap = '\n\n';
+  let note = '';
+  if(!s.flags.has('safe_code') && !s.flags.has('clue_ledger') && s.flags.has('clue_weapon') && npcAway('tanaka')) note += gap+'「田中さんは、もう退社している時間だな。話を聞くのは明日の朝にしよう。」';
+  if(m >= hm(22)) return note + gap+'「それと、もう遅い。聞き込みは空振りになりやすい時間だ。署に戻って、少し休んでおくのも手だぞ。」';
+  if(m >= hm(19)) return note + gap+'「夜になった。この時間は、夕方から動く店や施設を当たるには、ちょうどいい。」';
+  if(m < hm(11) && s.flags.has('clue_domoto_confess')) return note + gap+'「まだ朝のうちだ。夕方から動く場所は、日が傾いてからでないと開かないぞ。」';
+  return note;
 }
 function akiraHint(s){
   if(!s.flags.has('clue_autopsy')) return '「まずは署にある検死報告書に目を通しておいた方がいい。」';
@@ -386,7 +390,7 @@ const NPCS = {
   akira:{
     ...CHAR_SPRITES.akira,
     topics:[
-      {label:'アドバイスをもらう', run:(s)=> akiraHint(s) + akiraTimeNote()},
+      {label:'アドバイスをもらう', run:(s)=> akiraHint(s) + akiraTimeNote(s)},
       {label:'事件について', run:()=> '「怨恨か、金か……こういう事件はだいたい、身近な人間の仕業と相場が決まってるものさ。」'},
       {label:'凶器について', visible:(s)=> s.flags.has('clue_weapon') && !s.flags.has('clue_akira_knew'), run:(s)=>{
         giveClue(s,'clue_akira_knew');
@@ -735,7 +739,7 @@ const LOCATIONS = {
     ]
   },
   warehouse:{
-    name:'赤レンガ倉庫', bg:'warehouse', npcs:['komatsu'], openFrom:1020, via:'日本大通りから、赤レンガパークへ歩いた。',
+    name:'赤レンガ倉庫', bg:'warehouse', npcs:['komatsu'], openFrom:hm(17), via:'日本大通りから、赤レンガパークへ歩いた。',
     first:'夕暮れの赤レンガ倉庫。観光客の去った広場に、古い詰所の灯りだけがともっている。',
     repeat:'赤レンガ倉庫。潮風に混じって、古いレンガの匂いがする。',
     examine:[
@@ -744,7 +748,7 @@ const LOCATIONS = {
     ]
   },
   park:{
-    name:'山下公園', bg:'park', npcs:[], openFrom:1080, via:'海沿いの道を、山下公園へ向かった。',
+    name:'山下公園', bg:'park', npcs:[], openFrom:hm(18), via:'海沿いの道を、山下公園へ向かった。',
     first:'海沿いの遊歩道が続く山下公園。港に停泊する大きな船が、夕闇の中に静かに浮かんでいる。',
     repeat:'山下公園。遊歩道を、潮風が抜けていく。',
     examine:[
@@ -762,7 +766,7 @@ const LOCATIONS = {
     ]
   },
   wheel:{
-    name:'大観覧車', bg:'wheel', npcs:['kimura'], openFrom:1170, via:'桜木町駅から動く歩道で、大観覧車のある一角へ向かった。',
+    name:'大観覧車', bg:'wheel', npcs:['kimura'], openFrom:hm(19,30), via:'桜木町駅から動く歩道で、大観覧車のある一角へ向かった。',
     first:'夜のみなとみらいに、大観覧車の光が回っている。乗り場の券売所に、まだ灯りがともっていた。',
     repeat:'大観覧車。色とりどりの光が、ゆっくりと夜空を巡っている。',
     examine:[
@@ -771,7 +775,7 @@ const LOCATIONS = {
     ]
   },
   chinatown:{
-    name:'横浜中華街', bg:'china', npcs:['ryu'], openFrom:1140, via:'みなとみらい線で、元町・中華街駅へ向かった。',
+    name:'横浜中華街', bg:'china', npcs:['ryu'], openFrom:hm(19), via:'みなとみらい線で、元町・中華街駅へ向かった。',
     first:'夜の横浜中華街。赤い提灯が連なる路地に、店じまいを始めた料理店の灯りがともっている。',
     repeat:'横浜中華街。提灯の赤が、濡れた石畳に揺れている。',
     examine:[
@@ -780,7 +784,7 @@ const LOCATIONS = {
     ]
   },
   bar:{
-    name:'スナック「かもめ」', bg:'bar', npcs:['mama'], openFrom:1140,
+    name:'スナック「かもめ」', bg:'bar', npcs:['mama'], openFrom:hm(19),
     first:'みなとみらいの片隅、赤レンガ倉庫にほど近い小さなスナック。カウンターだけの、昔ながらの店だ。',
     repeat:'スナック「かもめ」。今日もママが、カウンターを磨いている。',
     examine:[
@@ -883,7 +887,7 @@ let ui = {mode:'idle', npc:null, suspect:null};
 let pendingLog = [];
 
 function newState(){
-  return {day:1, clock:490, location:'police', flags:new Set(), items:new Set(), clueOrder:[], clueMeta:{}, travelCount:0, accuseFails:0};
+  return {day:1, clock:CLOCK.start, location:'police', flags:new Set(), items:new Set(), clueOrder:[], clueMeta:{}, travelCount:0, accuseFails:0};
 }
 
 function giveClue(s,id){
@@ -932,7 +936,7 @@ function loadGame(){
     if(!raw) return null;
     const d = JSON.parse(raw);
     return {
-      day:Number(d.day)||1, clock:(Number(d.clock)>=0 && Number(d.clock)<1440) ? Number(d.clock) : 540, location:LOCATIONS[d.location] ? d.location : 'police',
+      day:Number(d.day)||1, clock:(typeof d.clock==='number' && d.clock>=0 && d.clock<1440) ? d.clock : CLOCK.fallback, location:LOCATIONS[d.location] ? d.location : 'police',
       flags:new Set(Array.isArray(d.flags) ? d.flags : []), items:new Set(Array.isArray(d.items) ? d.items : []),
       clueOrder:(Array.isArray(d.clueOrder) ? d.clueOrder : []).filter(c=> CLUES[c]), clueMeta:(d.clueMeta && typeof d.clueMeta==='object') ? d.clueMeta : {}, travelCount:d.travelCount||0,
       accuseFails:d.accuseFails||0
@@ -1190,9 +1194,10 @@ const sfx = (function(){
 function fmtClock(m){ return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'); }
 function tick(m){
   state.clock += m;
-  if(state.clock >= 23*60+30){
+  if(state.clock >= CLOCK.sleep){
     state.day++;
-    state.clock = 8*60+30;
+    state.clock = CLOCK.wake;
+    state.location = 'police';
     logLine('夜も更けた。いったん捜査を切り上げ、署の仮眠室で休んだ。――翌朝、'+state.day+'日目が始まる。', 'system');
   }
 }
@@ -1227,7 +1232,7 @@ function addBackBtn(label, onClick){
   addBtn(label||'← もどる', 'back', onClick || doBack);
 }
 
-const NPC_AWAY = {tanaka:{from:1140, note:'事務所の灯りは落ち、秘書の田中はすでに退社したようだ。話を聞くなら、明日の朝だろう。'}};
+const NPC_AWAY = {tanaka:{from:hm(19), note:'事務所の灯りは落ち、秘書の田中はすでに退社したようだ。話を聞くなら、明日の朝だろう。'}};
 function npcAway(id){ const a = NPC_AWAY[id]; return !!(a && state.clock >= a.from); }
 function currentNpcList(){
   const loc = LOCATIONS[state.location];
@@ -1358,7 +1363,7 @@ function renderTargetPanel(){
     const cf = document.createElement('div');
     cf.className = 'note-card';
     cf.innerHTML = '<div class="t">■ 事件概要　港署 事件番号 第0417号</div><div class="d">被害者：梶原長一（梶原商会 社長）。発見場所：同社事務所。'
-      + (state.flags.has('clue_autopsy') ? '死亡推定時刻：前夜21時〜22時。凶器：鋭利な刃物。' : '検視結果は未確認。')
+      + (state.flags.has('clue_autopsy') ? CLUES.clue_autopsy.text : '検視結果は未確認。')
       + '現在 '+state.day+'日目 '+fmtClock(state.clock)+'。</div>';
     targetPanel.appendChild(cf);
     addHint('手がかり '+state.clueOrder.length+' / '+Object.keys(CLUES).length);
@@ -1419,11 +1424,11 @@ function doBack(){
 
 function doTravel(locId){
   sfx.move();
-  state.location = locId;
   state.travelCount++;
   const loc = LOCATIONS[locId];
   if(loc.via) logLine(loc.via, 'narration');
   tick(25);
+  state.location = locId;
   if(loc.openFrom && state.clock < loc.openFrom){
     state.clock = loc.openFrom + 5;
     logLine('店や施設が動き出す夕刻まで、周辺で聞き込みをして時間をつぶした。', 'system');
