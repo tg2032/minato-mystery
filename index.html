@@ -1487,6 +1487,7 @@ function doTravel(locId){
     logLine(loc.repeat, 'narration');
   }
   (loc.npcs||[]).forEach(id=>{ if(npcAway(id)) logLine(NPC_AWAY[id].note, 'system'); });
+  if(locId==='osanbashi' && state.flags.has('akira_saw_photo') && !state.flags.has('clue_threat_call')) logLine('こちらに気づいた椎名が、青ざめた顔で手招きしている。', 'warn');
   ui.mode = 'idle';
   renderAll();
   saveGame();
